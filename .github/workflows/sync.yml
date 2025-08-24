@@ -54,11 +54,11 @@ jobs:
       - name: Add upstream and fetch
         run: |
           git remote remove upstream 2>/dev/null || true
-          git remote add upstream https://github.com/KaringX/karing.git
+          git remote add upstream https://github.com/5VNetwork/vproxy.git
           git fetch upstream --tags --force --prune
           git fetch upstream --force --prune '+refs/heads/*:refs/remotes/upstream/*'
 
-      # 6️⃣ 同步所有分支（保留工作流文件）
+      # 6️⃣ 同步所有分支（保留工作流文件）- 修复合并错误
       - name: Sync branches with workflow preservation
         run: |
           # 获取默认分支名称
@@ -84,7 +84,8 @@ jobs:
               # 对于默认分支，使用合并而不是重置，以保留工作流文件
               if [ "$branch_name" = "$default_branch" ]; then
                 echo "Merging upstream changes to default branch (preserving workflows)"
-                git merge --no-commit upstream/$branch_name
+                # 添加 --allow-unrelated-histories 参数以允许合并不相关的历史
+                git merge --no-commit --allow-unrelated-histories upstream/$branch_name
                 
                 # 恢复工作流文件
                 if [ -d "/tmp/backup" ]; then
@@ -148,7 +149,7 @@ jobs:
           # 获取上游所有发布（按版本号排序）
           echo "Getting upstream releases..."
           upstream_releases=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            "https://api.github.com/repos/KaringX/karing/releases?per_page=100" | \
+            "https://api.github.com/repos/5VNetwork/vproxy/releases?per_page=100" | \
             jq -r '.[].tag_name' | sort -V)
           echo "Upstream releases: $upstream_releases"
           
@@ -191,7 +192,7 @@ jobs:
             
             # 获取发布详情
             release_info=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              "https://api.github.com/repos/KaringX/karing/releases/tags/$tag_name")
+              "https://api.github.com/repos/5VNetwork/vproxy/releases/tags/$tag_name")
             
             # 检查是否有错误
             if echo "$release_info" | jq -e '.message' > /dev/null 2>&1; then
